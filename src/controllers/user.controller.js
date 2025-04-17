@@ -30,8 +30,8 @@ export async function createUser(req, res) {
 export async function getUser(req, res) {
     try {
         const userRepository = appDataSource.getRepository(UserSchema);
-        const id = req.params;
-        const userFound = await userRepository.findOne({ where: [{ id: id.id }] });
+        const id = req.params.id;
+        const userFound = await userRepository.findOne({ where: [{ id: id }] });
         if (!userFound) {
             return res.status(404).json({ message: "usuario no encontrado", data: null });
         }
