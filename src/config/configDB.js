@@ -1,7 +1,7 @@
 import { DataSource } from "typeorm";
 import { DATABASE, DB_USERNAME, PASSWORD, HOST } from "./configEnv.js";
 
-export const appDataSource = new DataSource({
+export const AppDataSource = new DataSource({
     type: 'postgres',
     host: `${HOST}`,
     port: `5432`,
@@ -15,7 +15,7 @@ export const appDataSource = new DataSource({
 
 export async function connectDB() {
     try {
-        await appDataSource.initialize();
+        await AppDataSource.initialize();
         console.log("Conexion a la base de datos exitosa");
     } catch (error) {
         console.error("Ocurrio un error en: ", error);

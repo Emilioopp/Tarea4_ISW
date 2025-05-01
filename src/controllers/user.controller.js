@@ -1,64 +1,145 @@
-import { UserSchema } from "../entity/user.entity.js";
-import { appDataSource } from "../config/configDB.js";
-
-export async function createUser(req, res) {
-    try {
-        const userRepository = appDataSource.getRepository(UserSchema);
-        const user = req.body;
-        if (!user) {
-            return res.status(400).json({
-                message: "deben enviarse datos",
-                data: null
-            });
-        }
-        const newUser = userRepository.create({
-            nombreCompleto: user.nombreCompleto,
-            correo: user.correo,
-            rut: user.rut
-        })
-
-        const userSaved = await userRepository.save(newUser);
-        return res.status(201).json({
-            message: "Usuario creado",
-            data: userSaved
-        })
-    } catch (error) {
-        console.error("error al crear el usuario :", error);
-    }
-}
+"use strict";
+import {
+  deleteUserService,
+  getUserService,
+  getUsersService,
+  updateUserService,
+  createUserService,
+} from "../services/user.service.js";
+import {
+  userBodyValidation,
+  userQueryValidation,
+} from "../validations/user.validation.js";
+import {
+  handleErrorClient,
+  handleErrorServer,
+  handleSuccess,
+} from "../handlers/responseHandlers.js";
 
 export async function getUser(req, res) {
-    try {
-        const userRepository = appDataSource.getRepository(UserSchema);
-        const id = req.params.id;
-        const userFound = await userRepository.findOne({ where: [{ id: id }] });
-        if (!userFound) {
-            return res.status(404).json({ message: "usuario no encontrado", data: null });
-        }
+  try {
+    const { rut, id, correo } = req.query;
+    
+    const { error } = userQueryValidation.validate({ rut, id, correo });
 
-        return res.status(302).json({ message: "usuario encontrado", data: userFound });
+    if (error) return handleErrorClient(res, 400, error.message);
 
-    } catch (error) {
-        console.error(error);
-    }
+    const [user, errorUser] = await getUserService({ rut, id, correo });
+
+    if (errorUser) return handleErrorClient(res, 404, errorUser);
+
+    handleSuccess(res, 200, "Usuario encontrado", user);
+  } catch (error) {
+    handleErrorServer(res, 500, error.message);
+  }
 }
-
 
 export async function getUsers(req, res) {
-    const userRepository = appDataSource.getRepository(UserSchema);
-    const users = await userRepository.find();
-    if (!users) {
-        return res.status(404).json({
-            message: "No se encontraron usuarios ",
-            data: null
-        });
-    }
-    return res.status(302).json({
-        message: "Se encontraron usuarios ",
-        data: users
-    })
+  try {
+    const [users, errorUsers] = await getUsersService();
+
+    if (errorUsers) return handleErrorClient(res, 404, errorUsers);
+
+    users.length === 0
+      ? handleSuccess(res, 204)
+      : handleSuccess(res, 200, "Usuarios encontrados", users);
+  } catch (error) {
+    handleErrorServer(
+      res,
+      500,
+      error.message,
+    );
+  }
 }
 
-export async function deleteUser(req,res) {
-    
+export async function updateUser(req, res) {
+  try {
+    const { rut, id, correo } = req.query;
+    const { body } = req;
+
+    const { error: queryError } = userQueryValidation.validate({
+      rut,
+      id,
+      correo,
+    });
+
+    if (queryError) {
+      return handleErrorClient(
+        res,
+        400,
+        "Error de validación en la consulta",
+        queryError.message,
+      );
+    }
+
+    const { error: bodyError } = userBodyValidation.validate(body);
+
+    if (bodyError)
+      return handleErrorClient(
+        res,
+        400,
+        "Error de validación en los datos enviados",
+        bodyError.message,
+      );
+
+    const [user, userError] = await updateUserService({ rut, id, correo }, body);
+
+    if (userError) return handleErrorClient(res, 400, "Error modificando al usuario", userError);
+
+    handleSuccess(res, 200, "Usuario modificado correctamente", user);
+  } catch (error) {
+    handleErrorServer(res, 500, error.message);
+  }
+}
+
+export async function deleteUser(req, res) {
+  try {
+    const { rut, id, correo } = req.query;
+
+    const { error: queryError } = userQueryValidation.validate({
+      rut,
+      id,
+      correo,
+    });
+
+    if (queryError) {
+      return handleErrorClient(
+        res,
+        400,
+        "Error de validación en la consulta",
+        queryError.message,
+      );
+    }
+
+    const [userDelete, errorUserDelete] = await deleteUserService({
+      rut,
+      id,
+      correo,
+    });
+
+    if (errorUserDelete) return handleErrorClient(res, 404, "Error eliminado al usuario", errorUserDelete);
+
+    handleSuccess(res, 200, "Usuario eliminado correctamente", userDelete);
+  } catch (error) {
+    handleErrorServer(res, 500, error.message);
+  }
+}
+
+export async function createUser(req, res) {
+  try {
+    const { body } = req;
+
+    const { error } = userBodyValidation.validate(body);
+
+    if (error)
+      return handleErrorClient(res, 400, "Error de validación", error.message);
+
+    const [newUser, errorNewUser] = await createUserService(body);
+
+    if (errorNewUser) return handleErrorClient(res, 400, "Error registrando al usuario", errorNewUser);
+
+    handleSuccess(res, 201, "Usuario registrado con éxito", newUser);
+  } catch (error) {
+    handleErrorServer(res, 500, error.message);
+  }
 }
