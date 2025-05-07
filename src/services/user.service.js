@@ -59,10 +59,15 @@ export async function updateUserService(query, body) {
       return [null, "Ya existe un usuario con el mismo rut o correo"];
     }
 
+    if (body.telefono && !/^\+569\d{8}$/.test(body.telefono)) {
+      return [null, "Número de teléfono inválido. Debe comenzar con +569 y tener 8 dígitos."];
+    }
+
     const dataUserUpdate = {
       nombreCompleto: body.nombreCompleto,
       rut: body.rut,
       correo: body.correo,
+      telefono: body.telefono
     };
 
     await userRepository.update({ id: userFound.id }, dataUserUpdate);
@@ -115,7 +120,7 @@ export async function createUserService(user) {
   try {
     const userRepository = AppDataSource.getRepository(UserSchema);
 
-    const { nombreCompleto, rut, correo } = user;
+    const { nombreCompleto, rut, correo, telefono } = user;
 
     const createErrorMessage = (dataInfo, message) => ({
       dataInfo,
@@ -138,10 +143,15 @@ export async function createUserService(user) {
     
     if (existingRutUser) return [null, createErrorMessage("rut", "Rut ya asociado a una cuenta")];
 
+    if (telefono && !/^\+569\d{8}$/.test(telefono)) {
+      return [null, createErrorMessage("telefono", "Formato de teléfono inválido")];
+    }
+
     const newUser = userRepository.create({
       nombreCompleto,
       correo,
       rut,
+      telefono
     });
 
     await userRepository.save(newUser);

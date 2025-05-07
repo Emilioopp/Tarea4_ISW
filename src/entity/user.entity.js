@@ -24,6 +24,10 @@ export const UserSchema= new EntitySchema({
             length:255,
             nullable:false
         },
+        telefono:{
+            type:'varchar',
+            nullable:false
+        },
         createdAt:{
             type:'time with time zone',
             default: ()=> 'CURRENT_TIMESTAMP',
