@@ -44,13 +44,20 @@ export const userQueryValidation = Joi.object({
       "string.max": "El rut debe tener como máximo 12 caracteres.",
       "string.pattern.base": "Formato rut inválido, debe ser xx.xxx.xxx-x o xxxxxxxx-x.",
     }),
-})
-  .or("id", "correo", "rut")
+    telefono: Joi.string()
+    .pattern(/^\+569\d{8}$/)
+    .messages({
+      "string.empty": "El teléfono no puede estar vacío.",
+      "string.base": "El teléfono debe ser de tipo string.",
+      "string.pattern.base": "El número de teléfono debe comenzar con +569 y tener 8 dígitos."
+    }),
+})  
+  .or("id", "correo", "rut", "telefono")
   .unknown(false)
   .messages({
     "object.unknown": "No se permiten propiedades adicionales.",
     "object.missing":
-      "Debes proporcionar al menos un parámetro: id, email o rut.",
+      "Debes proporcionar al menos un parámetro: id, email, telefono o rut.",
   });
 
 export const userBodyValidation = Joi.object({
@@ -91,15 +98,23 @@ export const userBodyValidation = Joi.object({
       "string.max": "El rut debe tener como máximo 12 caracteres.",
       "string.pattern.base": "Formato rut inválido, debe ser xx.xxx.xxx-x o xxxxxxxx-x.",
     }),
+    telefono: Joi.string()
+      .pattern(/^\+569\d{8}$/)
+      .messages({
+        "string.empty": "El teléfono no puede estar vacío.",
+        "string.base": "El teléfono debe ser de tipo string.",
+        "string.pattern.base": "El número de teléfono debe comenzar con +569 y tener 8 dígitos."
+      }),
 })
   .or(
     "nombreCompleto",
     "correo",
     "rut",
+    "telefono"
   )
   .unknown(false)
   .messages({
     "object.unknown": "No se permiten propiedades adicionales.",
     "object.missing":
-      "Debes proporcionar al menos un campo: nombreCompleto, email, password, newPassword, rut o rol.",
+      "Debes proporcionar al menos un campo: nombreCompleto, email, password, newPassword, rut, rol o telefono.",
   });
